@@ -30,7 +30,6 @@
     "wechaty-puppet-xp": "^1.10.27"
   },
   "devDependencies": {
-    "prettier": "^2.6.2",
     "ts-node": "^10.8.0",
     "typescript": "^4.6.4"
   }
