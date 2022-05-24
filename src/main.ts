@@ -1,4 +1,5 @@
 import { PuppetPadlocal } from "wechaty-puppet-padlocal";
+import { PuppetXp } from "wechaty-puppet-xp";
 import { log, ScanStatus, WechatyBuilder } from "wechaty";
 import FormData from "form-data";
 import axios from "axios";
@@ -8,10 +9,11 @@ import { getTidByText } from "../lib/keywords";
 // 去掉注释，可以完全打开调试日志
 // log.level("silly");
 
-const puppet = new PuppetPadlocal({
-  token: "puppet_padlocal_41c81610edfc4d25836d0589a747c8a5",
-});
+// const puppet = new PuppetPadlocal({
+//   token: "puppet_padlocal_41c81610edfc4d25836d0589a747c8a5",
+// });
 
+const puppet = new PuppetXp();
 /**
  * Sales API
  */
