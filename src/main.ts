@@ -162,21 +162,25 @@ const saleBot = WechatyBuilder.build({
 
   .on("message", async message => {
     log.info("TestBot", `on message: ${message.toString()}`);
-    console.log("id", message.room()?.id);
-    console.log("mentionself", await message.mentionSelf());
-    console.log("mentionList", await message.mentionList());
-    console.log("mentionText", await message.mentionText());
-    console.log("text", message.text());
-    console.log("payload", message.payload);
+    // console.log("id", message.room()?.id);
+    // console.log("mentionself", await message.mentionSelf());
+    // console.log("mentionList", await message.mentionList());
+    // console.log("mentionText", await message.mentionText());
+    // console.log("text", message.text());
+    // console.log("payload", message.payload);
 
     const isRoomMsg = message.room();
     const tid = getTidByText(await message.mentionText());
     const mentionSelf = await message.mentionSelf();
-    if(isRoomMsg && message.text().includes('你叫什么') && mentionSelf) {
+    if(isRoomMsg && (message.text().includes('你叫什么') || message.text().includes('你是谁')) && mentionSelf) {
       message.room()?.say('你好，我是Finch！');
       return;
     }
-    if (isRoomMsg && !!tid && mentionSelf) {
+    if (isRoomMsg  && mentionSelf) {
+      if(!tid){
+        message.room()?.say('这个问题Finch还不懂呢！');
+        return;
+      }
       const sales = await getSaleData(tid);
       const today = new Date();
       const time = today.toLocaleDateString() + " " + today.toLocaleTimeString('en-US', { hour12:false });
