@@ -7,6 +7,7 @@ import { log, ScanStatus, WechatyBuilder } from "wechaty";
 const senLin = "wxid_kquzdy2vqfxr22";
 const me = "wxid_4z7iza3akh0g31";
 const huanDong = "25766000416@chatroom";
+
 const puppet = new PuppetPadlocal({
   token: "puppet_padlocal_41c81610edfc4d25836d0589a747c8a5",
 });
