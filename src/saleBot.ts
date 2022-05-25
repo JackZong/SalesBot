@@ -34,6 +34,8 @@ const folderNameReg = {
   format4: /.+\d+号住宅/,
 };
 
+let projectNames: string[] = [];
+
 const searchFloor = async (text: string) => {
   const formData = new FormData();
   formData.append("currentpage", 1);
@@ -70,14 +72,18 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
   const loids: { [key: string]: any } = {};
   for (const floor of houses) {
     const folderName = floor.querySelector("span[class*=folder]")?.textContent;
-
-    const id = folderName?.includes("、")
-      ? "spec"
-      : folderName?.replace("号楼", "");
-    if (!id) return;
     const allAreas = Array.from(floor.querySelectorAll("ul>li")).filter(
       (item) => item.innerHTML?.includes("住宅")
     );
+    const id =
+      folderName?.includes("、") && allAreas.length > 1
+        ? "spec"
+        : folderName
+            ?.replaceAll(/(S-\d+号楼)/g, "")
+            .replaceAll(/(\w*\d+-\d+号楼裙房)/g, "")
+            .replaceAll(/号|楼/g, "")
+            .replaceAll("、", "");
+    if (!id) return;
     for (const area of allAreas) {
       const href = area.querySelector("a");
       if (!href) return;
@@ -159,12 +165,44 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
   }
   sumary.rate = Math.ceil((sumary.sold / sumary.total) * 100);
   result.sumary = sumary;
-  console.log("result:", result);
+  // console.log("result:", result);
   return result;
 };
 
+export const getAllProjectName = async () => {
+  const formData = new FormData();
+  formData.append("currentpage", 1);
+  formData.append("pagesize", 140);
+  const response = JSON.parse(
+    await (
+      await axios.post(APIs.listProjectName, formData)
+    ).data.Body
+  ) as Body;
+  projectNames = response.bodylist
+    .map((item) =>
+      item.XMMC.replace(/\w*\d+\w+\d+[地块]*/, "")
+        .replaceAll(/\(([\s\S]*)\)/g, "")
+        .replaceAll(/.+·/gi, "")
+        .replaceAll(/厦门|子地块|地块|中海项目|·|？|项目/g, "")
+        .replace(/\w+\d+-\d+/, "")
+        .replaceAll("特房（2019TP01)", "")
+        .replaceAll("（X2016P03）", "")
+        .replaceAll("（一期）中铁", "")
+        .replaceAll(/\s*/g, "")
+    )
+    .filter((item) => !!item);
+  return projectNames;
+};
+
 export async function finch(text: string) {
-  const tids = await searchFloor(text);
+  if (!projectNames.length) {
+    await getAllProjectName();
+  }
+  console.dir(projectNames, { maxArrayLength: null });
+  const project = projectNames.find((item) => text.includes(item));
+  if (!project) return;
+  console.log("project", project);
+  const tids = await searchFloor(project);
   console.log("tids", tids);
   if (tids?.length) {
     const result = (
@@ -178,3 +216,5 @@ export async function finch(text: string) {
     return sales;
   }
 }
+
+finch("宝龙旭辉城");
