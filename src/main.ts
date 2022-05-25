@@ -6,6 +6,7 @@ import axios from "axios";
 import { tids, floors, naids, loids } from "../lib/floors";
 import * as accounts from "../lib/accounts";
 import { getTidByText } from "../lib/keywords";
+import { finchBot } from "./helloFinch";
 // 去掉注释，可以完全打开调试日志
 // log.level("silly");
 
@@ -22,12 +23,12 @@ const types = {
   sold: "fw_ysfw",
   forSale: "fw_zz",
   booked: "fw_yrgfw",
-  carForSale: "fw_ck"
+  carForSale: "fw_ck",
 };
 
 const APIs = {
   search: "http://fdc.zfj.xm.gov.cn/home/Getzslp",
-  getFloors: "http://fdc.zfj.xm.gov.cn/LP/Index"
+  getFloors: "http://fdc.zfj.xm.gov.cn/LP/Index",
 };
 
 const getFloorIds = (text: string) => {};
@@ -39,7 +40,7 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
   const domStr: string = response.data.toString();
   const filteredFloor = domStr
     .match(/<li>.+javascript:DispLp(.+)<\/li>/g)
-    ?.filter(item => !item.includes("单列") && !item.includes("公共车位"));
+    ?.filter((item) => !item.includes("单列") && !item.includes("公共车位"));
 
   if (!filteredFloor) return;
   const temp: { [key: string]: string } = {};
@@ -68,7 +69,7 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
   const result = {
     floors,
     naids: {},
-    loids: {}
+    loids: {},
   };
 };
 
@@ -86,7 +87,7 @@ const searchFloor = async (text: string) => {
 
 const getSaleData = async (tid: string) => {
   const result: { [key: string]: any } = {};
-  let sumary = {sold: 0, total: 0, rate:0}; 
+  let sumary = { sold: 0, total: 0, rate: 0 };
   for (const floor in floors[tid]) {
     const formData = new FormData();
     formData.append("NAID", naids[tid][floor]);
@@ -107,8 +108,8 @@ const getSaleData = async (tid: string) => {
       )?.length ?? 0;
     const booked = res.match(new RegExp(types.booked, "g"))?.length ?? 0;
     const total = sold + forSale + booked;
-    if(floor!== 'car' && floor !== 'car1') {
-      sumary.sold += sold+booked;
+    if (floor !== "car" && floor !== "car1") {
+      sumary.sold += sold + booked;
       sumary.total += total;
     }
     result[floor] = {
@@ -119,7 +120,7 @@ const getSaleData = async (tid: string) => {
       saleRate: `${Math.ceil(((booked + sold) / total) * 100)}%`,
     };
   }
-  sumary.rate = Math.ceil((sumary.sold  / sumary.total) * 100);
+  sumary.rate = Math.ceil((sumary.sold / sumary.total) * 100);
   result.sumary = sumary;
   console.log("result:", result);
   return result;
@@ -131,14 +132,14 @@ const getSaleData = async (tid: string) => {
 
 const saleBot = WechatyBuilder.build({
   name: "TestBot",
-  puppet
+  puppet,
 })
 
   .on("scan", (qrcode, status) => {
     if (status === ScanStatus.Waiting && qrcode) {
       const qrcodeImageUrl = [
         "https://wechaty.js.org/qrcode/",
-        encodeURIComponent(qrcode)
+        encodeURIComponent(qrcode),
       ].join("");
 
       log.info(
@@ -152,7 +153,7 @@ const saleBot = WechatyBuilder.build({
     }
   })
 
-  .on("login", user => {
+  .on("login", (user) => {
     log.info("TestBot", `${user} login`);
   })
 
@@ -160,7 +161,7 @@ const saleBot = WechatyBuilder.build({
     log.info("TestBot", `${user} logout, reason: ${reason}`);
   })
 
-  .on("message", async message => {
+  .on("message", async (message) => {
     log.info("TestBot", `on message: ${message.toString()}`);
     // console.log("id", message.room()?.id);
     // console.log("mentionself", await message.mentionSelf());
@@ -172,23 +173,22 @@ const saleBot = WechatyBuilder.build({
     const isRoomMsg = message.room();
     const tid = getTidByText(await message.mentionText());
     const mentionSelf = await message.mentionSelf();
-    if(isRoomMsg && (message.text().includes('你叫什么') || message.text().includes('你是谁')) && mentionSelf) {
-      message.room()?.say('你好，我是Finch！');
-      return;
-    }
-    if (isRoomMsg  && mentionSelf) {
-      if(!tid){
-        message.room()?.say('这个问题Finch还不懂呢！');
+    if (isRoomMsg && mentionSelf) {
+      if (!tid) {
+        message.room()?.say("这个问题Finch还不懂呢！");
         return;
       }
       const sales = await getSaleData(tid);
       const today = new Date();
-      const time = today.toLocaleDateString() + " " + today.toLocaleTimeString('en-US', { hour12:false });
+      const time =
+        today.toLocaleDateString() +
+        " " +
+        today.toLocaleTimeString("en-US", { hour12: false });
 
       let body = "";
 
-      Object.keys(sales).map(floor => {
-        if(floor === 'sumary') return;
+      Object.keys(sales).map((floor) => {
+        if (floor === "sumary") return;
         body += `
       ${
         floor === "car" || floor === "car1"
@@ -210,17 +210,15 @@ const saleBot = WechatyBuilder.build({
    查询时间: ${time}
    数据来源: 网上房地产
 `;
-    await message.room()?.say(template);
+      await message.room()?.say(template);
     }
   })
+  .on("message", finchBot)
 
-  .on("error", error => {
+  .on("error", (error) => {
     log.error("TestBot", "on error: ", error.stack);
   });
 
 saleBot.start().then(() => {
   log.info("TestBot", "started.");
 });
-
-// searchFloor("环东时代");
-// getFloors("100003209575");
