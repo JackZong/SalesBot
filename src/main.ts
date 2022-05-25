@@ -6,8 +6,8 @@ import axios from "axios";
 import { tids, floors, naids, loids } from "../lib/floors";
 import * as accounts from "../lib/accounts";
 import { getTidByText } from "../lib/keywords";
-import { finch } from "./saleBot";
-
+import { saleBotHandler } from "./saleBot";
+import { finchBot } from "./helloFinch";
 // 去掉注释，可以完全打开调试日志
 // log.level("silly");
 
@@ -131,7 +131,7 @@ const getSaleData = async (tid: string) => {
  * Sale Bot
  */
 
-const saleBot = WechatyBuilder.build({
+const Finch = WechatyBuilder.build({
   name: "TestBot",
   puppet,
 })
@@ -171,68 +171,69 @@ const saleBot = WechatyBuilder.build({
     // console.log("text", message.text());
     // console.log("payload", message.payload);
 
-    const isRoomMsg = message.room();
-    const tid = getTidByText(await message.mentionText());
-    const mentionSelf = await message.mentionSelf();
-    if (
-      isRoomMsg &&
-      (message.text().includes("你叫什么") ||
-        message.text().includes("你是谁")) &&
-      mentionSelf
-    ) {
-      message.room()?.say("你好，我是Finch！");
-      return;
-    }
-    if (isRoomMsg && mentionSelf) {
-      if (!tid) {
-        message.room()?.say("这个问题Finch还不懂呢！");
-        return;
-      }
-      const searchResult = await finch(message.text());
-      const today = new Date();
-      const time =
-        today.toLocaleDateString() +
-        " " +
-        today.toLocaleTimeString("en-US", { hour12: false });
+    //     const isRoomMsg = message.room();
+    //     const mentionSelf = await message.mentionSelf();
+    //     if (isRoomMsg && mentionSelf && message.room()?.id === accounts.testRoom) {
+    //       const searchResult = await saleBot(message.text());
+    //       const { data, project } = searchResult;
+    //       if (!data?.length) {
+    //         message.room()?.say("这个问题我还不懂呢！");
+    //         return;
+    //       }
 
-      let body = "";
-      ///
-      for (const item in searchResult) {
-        Object.keys(searchResult[item]).map((floor) => {
-          if (floor === "sumary") return;
-          body += `
-        ${
-          floor === "car" || floor === "car1"
-            ? `车位(${floor === "car" ? "负一" : "负二"})`
-            : floor + "号楼"
-        }: 共${sales[floor].total} | 销售率(${sales[floor].saleRate})
-      已售(${sales[floor].sold}) | 已认购(${sales[floor].booked}) | 未售(${
-            sales[floor].forSale
-          })
-      `;
-        });
-      }
+    //       let body = "";
+    //       let totalSold = 0;
+    //       let totalHouse = 0;
+    //       let totalRate = 0;
+    //       ///
+    //       for (const item of searchResult.data) {
+    //         if (item === undefined) return;
+    //         Object.keys(item).map((floor) => {
+    //           if (floor === "sumary") {
+    //             totalSold += item[floor].sold;
+    //             totalHouse += item[floor].total;
+    //             totalRate += item[floor].rate;
+    //             return;
+    //           }
+    //           body += `
+    //         ${
+    //           floor === "car" || floor === "car1"
+    //             ? `车位(${floor === "car" ? "负一" : "负二"})`
+    //             : floor + "号楼"
+    //         }: 共${item[floor].total} | 销售率(${item[floor].saleRate})
+    //       已售(${item[floor].sold}) | 已认购(${item[floor].booked}) | 未售(${
+    //             item[floor].forSale
+    //           })
+    //           ---- 备案 ---
+    //       `;
+    //         });
+    //       }
 
-      const template = `\u00A0
-      🌟${tids[tid]}销售数据🌟
+    //       const today = new Date();
+    //       const time =
+    //         today.toLocaleDateString() +
+    //         " " +
+    //         today.toLocaleTimeString("en-US", { hour12: false });
 
-        已售:${sales.sumary.sold}  去化:${sales.sumary.sold}/${sales.sumary.total}=${sales.sumary.rate}%
- ________________________________
-    ${body}
-   查询时间: ${time}
-   数据来源: 网上房地产
-`;
-      await message.room()?.say(template);
-    }
+    //       const template = `\u00A0
+    //       🌟${project}销售数据🌟
+
+    //         已售:${totalSold}  去化:${totalSold}/${totalHouse}=${totalRate}%
+    //  ________________________________
+    //     ${body}
+    //    查询时间: ${time}
+    //    数据来源: 网上房地产
+    // `;
+    //       await message.room()?.say(template);
+    //     }
   })
+  .on("message", finchBot)
+  .on("message", saleBotHandler)
 
   .on("error", (error) => {
     log.error("TestBot", "on error: ", error.stack);
   });
 
-saleBot.start().then(() => {
+Finch.start().then(() => {
   log.info("TestBot", "started.");
 });
-
-// searchFloor("环东时代");
-// getFloors("100003209575");

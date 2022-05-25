@@ -1,13 +1,19 @@
 import axios from "axios";
 import FormData, { promises } from "form-data";
 import { JSDOM } from "jsdom";
-
+import { Message } from "wechaty";
+import * as accounts from "../lib/accounts";
 import { APIs } from "../lib/api";
 
 export interface Body {
   currentpage: number;
   pagesize: number;
-  bodylist: { TRANSACTION_ID: string; YSXKZH: string; XMMC: string }[];
+  bodylist: {
+    TRANSACTION_ID: string;
+    YSXKZH: string;
+    XMMC: string;
+    APPROVALDATE: string;
+  }[];
 }
 
 export interface Floors {
@@ -25,6 +31,7 @@ const types = {
   carForSale: "fw_ck",
   pledge: "fw_tddy",
   cannotSale: "fw_bksfw",
+  fw_zjgcdy: "fw_zjgcdy",
 };
 
 const folderNameReg = {
@@ -194,27 +201,93 @@ export const getAllProjectName = async () => {
   return projectNames;
 };
 
-export async function finch(text: string) {
+export const saleBot: any = async (text: string) => {
   if (!projectNames.length) {
     await getAllProjectName();
   }
   console.dir(projectNames, { maxArrayLength: null });
   const project = projectNames.find((item) => text.includes(item));
-  if (!project) return;
+  if (!project) return {};
   console.log("project", project);
   const tids = await searchFloor(project);
   console.log("tids", tids);
-  if (tids?.length) {
-    const result = (
-      await Promise.all(tids.map((tid) => getFloors(tid)))
-    ).filter((item) => item !== undefined);
-    const sales = await Promise.all(
-      result.map(
-        (item) => item && getSaleData(item.floors, item.naids, item.loids)
-      )
-    );
-    return sales;
-  }
-}
+  if (!tids?.length) return {};
+  const result = (await Promise.all(tids.map((tid) => getFloors(tid)))).filter(
+    (item) => item !== undefined
+  );
+  if (!result.length) return {};
+  const sales = await Promise.all(
+    result.map(
+      (item) => item && getSaleData(item.floors, item.naids, item.loids)
+    )
+  );
+  return {
+    project,
+    data: sales.filter((item) => item !== undefined),
+  };
+};
 
-finch("宝龙旭辉城");
+export const saleBotHandler = async (message: Message) => {
+  // console.log("id", message.room()?.id);
+  // console.log("mentionself", await message.mentionSelf());
+  // console.log("mentionList", await message.mentionList());
+  // console.log("mentionText", await message.mentionText());
+  // console.log("text", message.text());
+  // console.log("payload", message.payload);
+
+  const isRoomMsg = message.room();
+  const mentionSelf =
+    (await message.mentionSelf()) || message.text().includes("@房产小助手 ");
+  if (isRoomMsg && mentionSelf && message.room()?.id === accounts.testRoom) {
+    const searchResult = await saleBot(message.text());
+    const { data, project } = searchResult;
+    if (!data?.length) {
+      message.room()?.say("这个问题我还不懂呢！");
+      return;
+    }
+
+    let body = "";
+    let totalSold = 0;
+    let totalHouse = 0;
+    let totalRate = 0;
+    let index = 0;
+    ///
+    for (const item of searchResult.data) {
+      index += 1;
+      if (item === undefined) return;
+      Object.keys(item).map((floor) => {
+        if (floor === "sumary") {
+          totalSold += item[floor].sold;
+          totalHouse += item[floor].total;
+          return;
+        }
+        body += `
+  ${floor}号楼: 共${item[floor].total} | 销售率(${item[floor].saleRate})
+  已售(${item[floor].sold}) | 已认购(${item[floor].booked}) | 未售(${item[floor].forSale})`;
+      });
+      searchResult.data.length > 1
+        ? (body += `
+    ---- 预售证(${index}) ----`)
+        : (body = body);
+    }
+
+    totalRate = Math.floor((totalSold / totalHouse) * 100);
+    const today = new Date();
+    const time =
+      today.toLocaleDateString() +
+      " " +
+      today.toLocaleTimeString("en-US", { hour12: false });
+
+    const template = `
+    🌟${project}销售数据🌟
+
+  已售:${totalSold}  去化:${totalSold}/${totalHouse}=${totalRate}%
+ ______________________________
+${body}
+  查询时间: ${time}
+  数据来源: 网上房地产
+`;
+    console.log(template);
+    await message.room()?.say(template);
+  }
+};
