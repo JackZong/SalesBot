@@ -5,8 +5,8 @@
   "main": "main.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "NODE_ENV=PROD && npx ts-node ./src/main.ts",
-    "dev": "NODE_ENV=DEV && nodemon ./src/main.ts"
+    "start": "NODE_ENV=PROD npx ts-node ./src/main.ts",
+    "dev": "NODE_ENV=DEV nodemon ./src/main.ts"
   },
   "repository": {
     "type": "git",

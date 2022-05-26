@@ -97,9 +97,14 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
     const allAreas = Array.from(floor.querySelectorAll("ul>li")).filter(
       (item) => item.innerHTML?.includes("住宅")
     );
+    const allAreasHasTi =
+      allAreas.filter((item) => item.innerHTML.includes("梯住宅")).length > 0;
     const specReg = /、|\d+-\d+号楼/;
     const id =
-      folderName && specReg.test(folderName) && allAreas.length > 1
+      folderName &&
+      specReg.test(folderName) &&
+      allAreas.length > 1 &&
+      !allAreasHasTi
         ? "spec"
         : folderName
             ?.replaceAll(/(S-*\d+号楼)/g, "")
@@ -304,8 +309,7 @@ export const saleBotHandler = async (message: Message) => {
 
     const title = `🌟${project}销售数据🌟`;
     const template = `\n\n\u00a0\u00a0${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
-    ____________________________
-    ${body}\n查询时间: ${time}\n数据来源: 网上房地产`;
+    ____________________________${body}\n\n查询时间: ${time}\n数据来源: 网上房地产`;
     console.log(template);
     await message.room()?.say(template);
 

@@ -104,4 +104,4 @@ dist
 .tern-port
 
 # Test bot
-./src/testBot.ts
+src/testBot.ts
