@@ -1,5 +1,7 @@
 import { PuppetPadlocal } from "wechaty-puppet-padlocal";
 import { PuppetXp } from "wechaty-puppet-xp";
+import { PuppetMock, mock } from "wechaty-puppet-mock";
+
 import { log, ScanStatus, WechatyBuilder } from "wechaty";
 import FormData from "form-data";
 import axios from "axios";
@@ -15,7 +17,10 @@ import { finchBot } from "./helloFinch";
 //   token: "puppet_padlocal_41c81610edfc4d25836d0589a747c8a5",
 // });
 
-const puppet = new PuppetXp();
+const mocker = new mock.Mocker();
+const puppet =
+  process.env.NODE_ENV === "PROD" ? new PuppetXp() : new PuppetMock({ mocker });
+
 /**
  * Sales API
  */
