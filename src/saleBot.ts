@@ -263,11 +263,13 @@ export const saleBotHandler = async (message: Message) => {
         }
         body += `
   ${floor}号楼: 共${item[floor].total} | 销售率(${item[floor].saleRate})
-  已售(${item[floor].sold}) | 已认购(${item[floor].booked}) | 未售(${item[floor].forSale})`;
+  已售(${item[floor].sold}) | 已认购(${item[floor].booked}) | 未售(${item[floor].forSale})
+  `;
       });
       searchResult.data.length > 1
         ? (body += `
-    ---- 预售证(${index}) ----`)
+        ---- 预售证(${index}) ----
+    `)
         : (body = body);
     }
 
@@ -278,10 +280,10 @@ export const saleBotHandler = async (message: Message) => {
       " " +
       today.toLocaleTimeString("en-US", { hour12: false });
 
-    const template = `
-    🌟${project}销售数据🌟
+    const template = `\u00A0   
+      🌟${project}销售数据🌟
 
-  已售:${totalSold}  去化:${totalSold}/${totalHouse}=${totalRate}%
+      已售:${totalSold}  去化:${totalSold}/${totalHouse}=${totalRate}%
  ______________________________
 ${body}
   查询时间: ${time}
