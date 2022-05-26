@@ -24,6 +24,21 @@ export interface Naids extends Floors {}
 
 export interface Loids extends Floors {}
 
+export interface FloorTable {
+  sold: string;
+  forSale: string;
+  booked: string;
+  // carForSale: string;
+  pledge: string;
+  cannotSale: string;
+  fw_zjgcdy: string;
+  summary: {
+    totalSold: number;
+    total: number;
+    saleRate: number;
+  };
+}
+
 const types = {
   sold: "fw_ysfw",
   forSale: "fw_zz",
@@ -35,7 +50,7 @@ const types = {
 };
 
 const folderNameReg = {
-  format1: /\d+-\d+号楼住宅/,
+  format1: /\d+号楼住宅/,
   format2: /\w+\d+-\d+号楼\w+梯住宅/,
   format3: /^\w+梯住宅/,
   format4: /.+\d+号住宅/,
@@ -82,13 +97,15 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
     const allAreas = Array.from(floor.querySelectorAll("ul>li")).filter(
       (item) => item.innerHTML?.includes("住宅")
     );
+    const specReg = /、|\d+-\d+号楼/;
     const id =
-      folderName?.includes("、") && allAreas.length > 1
+      folderName && specReg.test(folderName) && allAreas.length > 1
         ? "spec"
         : folderName
-            ?.replaceAll(/(S-\d+号楼)/g, "")
+            ?.replaceAll(/(S-*\d+号楼)/g, "")
             .replaceAll(/(\w*\d+-\d+号楼裙房)/g, "")
-            .replaceAll(/号|楼/g, "")
+            .replaceAll(/(\w*\d*号楼商业)/g, "")
+            .replaceAll(/号|楼|住|宅/g, "")
             .replaceAll("、", "");
     if (!id) return;
     for (const area of allAreas) {
@@ -131,8 +148,7 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
 };
 
 const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
-  const result: { [key: string]: any } = {};
-  let sumary = { sold: 0, total: 0, rate: 0 };
+  const result: { [key: string]: FloorTable } = {};
   for (const floor in floors) {
     const formData = new FormData();
     formData.append("NAID", naids[floor]);
@@ -153,12 +169,15 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
       )?.length ?? 0;
     const booked = res.match(new RegExp(types.booked, "g"))?.length ?? 0;
     const pledge = res.match(new RegExp(types.pledge, "g"))?.length ?? 0;
+    const fw_zjgcdy = res.match(new RegExp(types.fw_zjgcdy, "g"))?.length ?? 0;
     const cannotSale =
       res.match(new RegExp(types.cannotSale, "g"))?.length ?? 0;
-    const total = sold + forSale + booked + pledge + cannotSale;
+    const total = sold + forSale + booked + pledge + cannotSale + fw_zjgcdy;
+    const summary = { totalSold: 0, total: 0, saleRate: 0 };
     if (floor !== "car" && floor !== "car1") {
-      sumary.sold += sold + booked;
-      sumary.total += total;
+      summary.totalSold = sold + booked;
+      summary.total = total;
+      summary.saleRate = Math.ceil((summary.totalSold / summary.total) * 100);
     }
     result[floor] = {
       sold,
@@ -166,12 +185,11 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
       booked,
       pledge,
       cannotSale,
-      total,
-      saleRate: `${Math.ceil(((booked + sold) / total) * 100)}%`,
+      fw_zjgcdy,
+      summary,
     };
   }
-  sumary.rate = Math.ceil((sumary.sold / sumary.total) * 100);
-  result.sumary = sumary;
+
   // console.log("result:", result);
   return result;
 };
@@ -179,7 +197,7 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
 export const getAllProjectName = async () => {
   const formData = new FormData();
   formData.append("currentpage", 1);
-  formData.append("pagesize", 140);
+  formData.append("pagesize", 200);
   const response = JSON.parse(
     await (
       await axios.post(APIs.listProjectName, formData)
@@ -201,7 +219,7 @@ export const getAllProjectName = async () => {
   return projectNames;
 };
 
-export const saleBot: any = async (text: string) => {
+export const saleBot = async (text: string) => {
   if (!projectNames.length) {
     await getAllProjectName();
   }
@@ -228,17 +246,10 @@ export const saleBot: any = async (text: string) => {
 };
 
 export const saleBotHandler = async (message: Message) => {
-  // console.log("id", message.room()?.id);
-  // console.log("mentionself", await message.mentionSelf());
-  // console.log("mentionList", await message.mentionList());
-  // console.log("mentionText", await message.mentionText());
-  // console.log("text", message.text());
-  // console.log("payload", message.payload);
-
   const isRoomMsg = message.room();
   const mentionSelf =
     (await message.mentionSelf()) || message.text().includes("@房产小助手 ");
-  if (isRoomMsg && mentionSelf && message.room()?.id === accounts.testRoom) {
+  if (isRoomMsg && mentionSelf) {
     const searchResult = await saleBot(message.text());
     const { data, project } = searchResult;
     if (!data?.length) {
@@ -247,49 +258,62 @@ export const saleBotHandler = async (message: Message) => {
     }
 
     let body = "";
-    let totalSold = 0;
-    let totalHouse = 0;
+    let totalSolds = 0;
+    let totalHouses = 0;
     let totalRate = 0;
     let index = 0;
-    ///
-    for (const item of searchResult.data) {
+    for (const building of searchResult.data) {
       index += 1;
-      if (item === undefined) return;
-      Object.keys(item).map((floor) => {
-        if (floor === "sumary") {
-          totalSold += item[floor].sold;
-          totalHouse += item[floor].total;
-          return;
+      if (building === undefined) return;
+      Object.keys(building).map((No) => {
+        const {
+          summary: { total, saleRate, totalSold },
+          cannotSale,
+          pledge,
+          fw_zjgcdy,
+          sold,
+          booked,
+          forSale,
+        } = building[No];
+        const pledged = pledge + fw_zjgcdy;
+        const cannotSaleTemp = !!Number(cannotSale) && `不可售(${cannotSale})`;
+        const pledgedTemp = !!pledged && `抵押(${pledged})`;
+
+        body += `\n\n\u00a0\u00a0${No}号楼: 共${total} | 去化${saleRate}%\n已售(${sold}) | 已认购(${booked}) | 未售(${forSale})`;
+
+        if (cannotSaleTemp) {
+          body += "\n" + cannotSaleTemp;
         }
-        body += `
-  ${floor}号楼: 共${item[floor].total} | 销售率(${item[floor].saleRate})
-  已售(${item[floor].sold}) | 已认购(${item[floor].booked}) | 未售(${item[floor].forSale})
-  `;
+        if (pledgedTemp) {
+          body += cannotSaleTemp ? " | " + pledgedTemp : "\n" + pledgedTemp;
+        }
+        totalSolds += totalSold;
+        totalHouses += total;
+        return;
       });
-      searchResult.data.length > 1
-        ? (body += `
-        ---- 预售证(${index}) ----
-    `)
-        : (body = body);
+      searchResult.data.length > 1 &&
+        (body += `\n---- 以上为预售证(${index}) ----`);
     }
 
-    totalRate = Math.floor((totalSold / totalHouse) * 100);
+    totalRate = Math.floor((totalSolds / totalHouses) * 100);
     const today = new Date();
     const time =
       today.toLocaleDateString() +
       " " +
       today.toLocaleTimeString("en-US", { hour12: false });
 
-    const template = `\u00A0   
-      🌟${project}销售数据🌟
-
-      已售:${totalSold}  去化:${totalSold}/${totalHouse}=${totalRate}%
- ______________________________
-${body}
-  查询时间: ${time}
-  数据来源: 网上房地产
-`;
+    const title = `🌟${project}销售数据🌟`;
+    const template = `\n\n\u00a0\u00a0${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
+    ____________________________
+    ${body}\n查询时间: ${time}\n数据来源: 网上房地产`;
     console.log(template);
     await message.room()?.say(template);
+
+    // console.log("id", message.room()?.id);
+    // console.log("mentionself", await message.mentionSelf());
+    // console.log("mentionList", await message.mentionList());
+    // console.log("mentionText", await message.mentionText());
+    // console.log("text", message.text());
+    // console.log("payload", message.payload);
   }
 };
