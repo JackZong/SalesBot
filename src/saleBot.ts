@@ -160,19 +160,20 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
 const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
   const result: { [key: string]: FloorTable } = {};
   for (const floor in floors) {
+    const floorId = floors[floor];
     if (
-      floorsCache[floor] &&
-      floorsCacheTime[floor] &&
-      Date.now() - floorsCacheTime[floor] > 600 * 1000
+      floorsCache[floorId] &&
+      floorsCacheTime[floorId] &&
+      Date.now() - floorsCacheTime[floorId] < 600 * 1000
     ) {
       console.log("hit cache");
-      result[floor] = floorsCache[floor];
+      result[floor] = floorsCache[floorId];
       return;
     }
     const formData = new FormData();
     formData.append("NAID", naids[floor]);
     formData.append("lotid", loids[floor]);
-    formData.append("BuildID", floors[floor]);
+    formData.append("BuildID", floorId);
     const res = await (
       await axios.post("http://fdc.zfj.xm.gov.cn/Lp/LPPartial?", formData)
     ).data.toString();
@@ -208,8 +209,8 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
       summary,
     };
     result[floor] = data;
-    floorsCache[floor] = data;
-    floorsCacheTime[floor] = Date.now();
+    floorsCache[floorId] = data;
+    floorsCacheTime[floorId] = Date.now();
   }
 
   // console.log("result:", result);
