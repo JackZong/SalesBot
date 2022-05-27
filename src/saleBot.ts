@@ -250,9 +250,9 @@ export const saleBot = async (text: string) => {
   //console.dir(projectNames, { maxArrayLength: null });
   const project = projectNames.find((item) => text.includes(item));
   if (!project) return {};
-  console.log("project", project);
+  //console.log("project", project);
   const tids = await searchFloor(project);
-  console.log("tids", tids);
+  //console.log("tids", tids);
   if (!tids?.length) return {};
   const result = (await Promise.all(tids.map((tid) => getFloors(tid)))).filter(
     (item) => item !== undefined
@@ -328,9 +328,9 @@ export const saleBotHandler = async (message: Message) => {
       today.toLocaleTimeString("en-US", { hour12: false });
 
     const title = `🌟${project}销售数据🌟`;
-    const template = `\n\n\u00a0\u00a0${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
-    ____________________________${body}\n\n查询时间: ${time}\n数据来源: 网上房地产`;
-    console.log(template);
+    const template = `\n\n\u00a0\u00a0\u00a0\u00a0  ${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
+    ____________________________${body}\n\n查询时间: ${time}\n数据来源: 网上房地产 `;
+   // console.log(template);
     await message.room()?.say(template);
 
     // console.log("id", message.room()?.id);
