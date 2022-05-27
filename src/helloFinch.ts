@@ -18,6 +18,10 @@ export const helloFinch = (text: string) => {
     When it does, how you deal with it, what you do will define who you are. It happens to all of us. 
     Whether we want it to or not.' - Finch`;
   }
+
+  if (text.match(/你会做|干什么/)) {
+    return `我可以帮你查询在售楼盘的备案数据哦～你可以@我并说“查询+楼盘名称+备案数据”，比如，@房产小助手查询环东时代销售数据。快来试试吧！`;
+  }
 };
 
 /**
