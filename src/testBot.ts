@@ -15,4 +15,7 @@ export function SimpleEnvironmentStart(mocker: Mocker): any {
     topic: "测试群",
   });
   jack.say("环东时代", [finch]).to(room);
+  setInterval(() => {
+    jack.say("环东时代", [finch]).to(room);
+  }, 5000);
 }

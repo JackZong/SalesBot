@@ -168,8 +168,9 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
     ) {
       console.log("hit cache");
       result[floor] = floorsCache[floorId];
-      return;
+      continue;
     }
+
     const formData = new FormData();
     formData.append("NAID", naids[floor]);
     formData.append("lotid", loids[floor]);
@@ -246,7 +247,7 @@ export const saleBot = async (text: string) => {
   if (!projectNames.length) {
     await getAllProjectName();
   }
-  console.dir(projectNames, { maxArrayLength: null });
+  //console.dir(projectNames, { maxArrayLength: null });
   const project = projectNames.find((item) => text.includes(item));
   if (!project) return {};
   console.log("project", project);
