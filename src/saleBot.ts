@@ -4,6 +4,7 @@ import { JSDOM } from "jsdom";
 import { Message } from "wechaty";
 import * as accounts from "../lib/accounts";
 import { APIs } from "../lib/api";
+import { helloFinch } from "./helloFinch";
 
 export interface Body {
   currentpage: number;
@@ -19,6 +20,9 @@ export interface Body {
 export interface Floors {
   [key: string]: any;
 }
+
+const floorsCache: { [key: string]: any } = {};
+const floorsCacheTime: { [key: string]: number } = {};
 
 export interface Naids extends Floors {}
 
@@ -143,6 +147,7 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
       loids[name] = ids?.[2];
     }
   }
+
   const result = {
     floors: houseIds,
     naids,
@@ -155,6 +160,15 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
 const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
   const result: { [key: string]: FloorTable } = {};
   for (const floor in floors) {
+    if (
+      floorsCache[floor] &&
+      floorsCacheTime[floor] &&
+      Date.now() - floorsCacheTime[floor] > 600 * 1000
+    ) {
+      console.log("hit cache");
+      result[floor] = floorsCache[floor];
+      return;
+    }
     const formData = new FormData();
     formData.append("NAID", naids[floor]);
     formData.append("lotid", loids[floor]);
@@ -184,7 +198,7 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
       summary.total = total;
       summary.saleRate = Math.ceil((summary.totalSold / summary.total) * 100);
     }
-    result[floor] = {
+    const data = {
       sold,
       forSale,
       booked,
@@ -193,6 +207,9 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
       fw_zjgcdy,
       summary,
     };
+    result[floor] = data;
+    floorsCache[floor] = data;
+    floorsCacheTime[floor] = Date.now();
   }
 
   // console.log("result:", result);
@@ -251,6 +268,7 @@ export const saleBot = async (text: string) => {
 };
 
 export const saleBotHandler = async (message: Message) => {
+  if (helloFinch(message.text())) return;
   const isRoomMsg = message.room();
   const mentionSelf =
     (await message.mentionSelf()) || message.text().includes("@房产小助手 ");

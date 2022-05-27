@@ -20,7 +20,7 @@ export const helloFinch = (text: string) => {
   }
 
   if (text.match(/你会做|干什么/)) {
-    return `我可以帮你查询在售楼盘的备案数据哦～你可以@我并说“查询+楼盘名称+备案数据”，比如，@房产小助手查询环东时代销售数据。快来试试吧！`;
+    return `我可以帮你查询在售楼盘的备案数据哦～你可以@我并说“查询+楼盘名称+销售数据”。比如，@房产小助手查询环东时代的销售数据，快来试试吧！`;
   }
 };
 
@@ -30,10 +30,10 @@ export const helloFinch = (text: string) => {
 
 export const finchBot = async (message: Message) => {
   const mentionSelf =
-    (await message.mentionSelf()) || message.text().includes("@Finch ");
+    (await message.mentionSelf()) || message.text().includes("@房产小助手 ");
   const roomId = message.room()?.id;
   const reply = helloFinch(message.text());
-  if (mentionSelf && reply && roomId === testRoom) {
+  if (mentionSelf && reply) {
     if (reply.includes("Golden Gate Bridge")) {
       const goldenBride = FileBox.fromFile(process.cwd() + "/assets/finch.jpg");
       message.room()?.say(reply);
