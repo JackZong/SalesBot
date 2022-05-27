@@ -106,7 +106,7 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
     const specReg = /、|\d+-\d+号楼/;
     const id =
       folderName &&
-      specReg.test(folderName) &&
+      // specReg.test(folderName) &&
       allAreas.length > 1 &&
       !allAreasHasTi
         ? "spec"
@@ -134,7 +134,7 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
         } else if (href.textContent?.match(folderNameReg.format3)) {
           secondary = href.textContent?.replace("梯住宅", "");
         } else if (href.textContent?.match(folderNameReg.format4)) {
-          secondary = href.textContent?.match(/\d+/)?.[0];
+          secondary = href.textContent?.match(/\d*-*\d+/)?.[0];
         }
 
         name =
@@ -221,7 +221,7 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
 export const getAllProjectName = async () => {
   const formData = new FormData();
   formData.append("currentpage", 1);
-  formData.append("pagesize", 200);
+  formData.append("pagesize", 1000);
   const response = JSON.parse(
     await (
       await axios.post(APIs.listProjectName, formData)
@@ -330,7 +330,7 @@ export const saleBotHandler = async (message: Message) => {
     const title = `🌟${project}销售数据🌟`;
     const template = `\n\n\u00a0\u00a0\u00a0\u00a0  ${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
     ____________________________${body}\n\n查询时间: ${time}\n数据来源: 网上房地产 `;
-   // console.log(template);
+    console.log(template);
     await message.room()?.say(template);
 
     // console.log("id", message.room()?.id);
