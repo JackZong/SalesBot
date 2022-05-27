@@ -10,8 +10,7 @@ import { SimpleEnvironmentStart } from "./testBot";
 
 const mocker = new mock.Mocker();
 
-const puppet =
-'PROD' === "PROD" ? new PuppetXp() : new PuppetMock({ mocker });
+const puppet = "PROD" === "PROD" ? new PuppetXp() : new PuppetMock({ mocker });
 
 /**
  * Finch Bot
@@ -49,7 +48,7 @@ const Finch = WechatyBuilder.build({
   })
 
   .on("message", async (message) => {
-   // log.info("FinchBot", `on message: ${message.toString()}`);
+    // log.info("FinchBot", `on message: ${message.toString()}`);
   })
   .on("message", finchBot)
   .on("message", saleBotHandler)
