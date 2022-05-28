@@ -166,9 +166,9 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
     if (
       floorsCache[floorId] &&
       floorsCacheTime[floorId] &&
-      Date.now() - floorsCacheTime[floorId] < 600 * 1000
+      Date.now() - floorsCacheTime[floorId] < PROJECT_NAMES_CACHE_TIME
     ) {
-      console.log("hit sale data cache");
+      // console.log("hit sale data cache");
       result[floor] = floorsCache[floorId];
       continue;
     }
@@ -226,7 +226,7 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
  */
 export const getAllProjectName = async () => {
   if (Date.now() - projectNamesCacheTime < PROJECT_NAMES_CACHE_TIME) {
-    console.log("hit get project names cache");
+    //console.log("hit get project names cache");
     return projectNames;
   }
   const formData = new FormData();
