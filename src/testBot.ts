@@ -1,5 +1,6 @@
 import { log } from "wechaty";
 import { Mocker } from "wechaty-puppet-mock/dist/esm/src/mock/mocker";
+import { getAllProjectName } from "./saleBot";
 
 export function SimpleEnvironmentStart(mocker: Mocker): any {
   log.verbose("SimpleEnvironment", "SimpleEnvironmentStart(%s)", mocker);

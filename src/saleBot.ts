@@ -61,6 +61,8 @@ const folderNameReg = {
 };
 
 let projectNames: string[] = [];
+let projectNamesCacheTime: number = 0;
+const PROJECT_NAMES_CACHE_TIME: number = 3 * 60 * 60 * 1000;
 
 const searchFloor = async (text: string) => {
   const formData = new FormData();
@@ -166,7 +168,7 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
       floorsCacheTime[floorId] &&
       Date.now() - floorsCacheTime[floorId] < 600 * 1000
     ) {
-      console.log("hit cache");
+      console.log("hit sale data cache");
       result[floor] = floorsCache[floorId];
       continue;
     }
@@ -218,10 +220,18 @@ const getSaleData = async (floors: Floors, naids: Naids, loids: Loids) => {
   return result;
 };
 
+/**
+ *
+ * @returns all project names
+ */
 export const getAllProjectName = async () => {
+  if (Date.now() - projectNamesCacheTime < PROJECT_NAMES_CACHE_TIME) {
+    console.log("hit get project names cache");
+    return projectNames;
+  }
   const formData = new FormData();
   formData.append("currentpage", 1);
-  formData.append("pagesize", 1000);
+  formData.append("pagesize", 550);
   const response = JSON.parse(
     await (
       await axios.post(APIs.listProjectName, formData)
@@ -229,24 +239,41 @@ export const getAllProjectName = async () => {
   ) as Body;
   projectNames = response.bodylist
     .map((item) =>
-      item.XMMC.replace(/\w*\d+\w+\d+[地块]*/, "")
-        .replaceAll(/\(([\s\S]*)\)/g, "")
-        .replaceAll(/.+·/gi, "")
-        .replaceAll(/厦门|子地块|地块|中海项目|·|？|项目/g, "")
-        .replace(/\w+\d+-\d+/, "")
-        .replaceAll("特房（2019TP01)", "")
-        .replaceAll("（X2016P03）", "")
-        .replaceAll("（一期）中铁", "")
-        .replaceAll(/\s*/g, "")
+      item.XMMC.replaceAll(/\s/g, "")
+        .replaceAll(/\（.*\）/g, "")
+        .replaceAll(/\(.*\)/g, "")
+        .replaceAll(/\(.*\）/g, "")
+        .replaceAll(/\（.*\)/g, "")
+        .replaceAll(/\w*\d+\w+\d+/g, "")
+        .replaceAll(/.+[·|.|．|？]/g, "")
+        .replace(
+          /地块|一期|二期|三期|六期|七期|建发|项目|子地块|特房|B1-1/g,
+          ""
+        )
+        .replace(/厦门/, "")
+        .replace(/中海/, "")
+        .replace(/环东金茂悦/, "金茂悦")
+        .replace(/C34#、35#楼/, "")
+        .replace(/7#-19#、21#-25#楼、2#地下室/, "")
+        .replace(/北方泓泰首开龙湖/, "")
+        .replace(/首创翔安首创/, "")
+        .replace(/-38#楼及地下室B区、四期、五期/, "")
+        .replace(/#楼及地下室/, "")
+        .replace(/1#～6#楼及地下室/, "")
+        .replace(/-/, "")
+        .replace(/\d+#/, "")
+        .replace(/大俊达海湾商业城融创大同府/, "融创大同府")
+        .replace(/.*山语听溪.*/, "山语听溪")
     )
+    .filter((item) => !item.includes("软件园"))
     .filter((item) => !!item);
+  projectNamesCacheTime = Date.now();
+  projectNames = Array.from(new Set(projectNames));
   return projectNames;
 };
 
 export const saleBot = async (text: string) => {
-  if (!projectNames.length) {
-    await getAllProjectName();
-  }
+  const projectNames = await getAllProjectName();
   //console.dir(projectNames, { maxArrayLength: null });
   const project = projectNames.find((item) => text.includes(item));
   if (!project) return {};
@@ -330,7 +357,7 @@ export const saleBotHandler = async (message: Message) => {
     const title = `🌟${project}销售数据🌟`;
     const template = `\n\n\u00a0\u00a0\u00a0\u00a0  ${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
     ____________________________${body}\n\n查询时间: ${time}\n数据来源: 网上房地产 `;
-    console.log(template);
+    // console.log(template);
     await message.room()?.say(template);
 
     // console.log("id", message.room()?.id);
