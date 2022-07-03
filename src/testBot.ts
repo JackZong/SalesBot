@@ -15,7 +15,7 @@ export function SimpleEnvironmentStart(mocker: Mocker): any {
     memberIdList: [jack.id, finch.id],
     topic: "测试群",
   });
-  jack.say("新玥公馆一期", [finch]).to(room);
+  jack.say("缦玥长滩", [finch]).to(room);
   // setInterval(() => {
   //   jack.say("环东时代", [finch]).to(room);
   // }, 5000);

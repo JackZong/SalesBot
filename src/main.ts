@@ -10,7 +10,8 @@ import { SimpleEnvironmentStart } from "./testBot";
 
 const mocker = new mock.Mocker();
 
-const puppet = "PROD" === "PROD" ? new PuppetXp() : new PuppetMock({ mocker });
+const puppet =
+  process.env.NODE_ENV === "DEV" ? new PuppetMock({ mocker }) : new PuppetXp();
 
 /**
  * Finch Bot
