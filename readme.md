@@ -1,4 +1,19 @@
-## 厦门房产小助手 & 业主群助手
+## 厦门房产小助手 
+
+### 功能
+
+可以方便的通过微信机器人的形式查询到厦门的新房备案数据 :)
+
+### Demo
+
+网上房地产官网：
+
+![新盘备案数据查询]('https://github.com/JackZong/SalesBot/blob/main/docs/wsfdc.png')
+
+
+微信机器人：
+
+![微信机器人的形式]('https://github.com/JackZong/SalesBot/blob/main/docs/demo.jpeg')
 
 ### Todo list
 
@@ -8,6 +23,4 @@
 - [x] 所有楼盘备案价查询
 - [ ] 一房一价表
 
-### Sub todo list(业主群)
 
-- [ ] 进群通知

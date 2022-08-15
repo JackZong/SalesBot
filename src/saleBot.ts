@@ -24,9 +24,9 @@ export interface Floors {
 const floorsCache: { [key: string]: any } = {};
 const floorsCacheTime: { [key: string]: number } = {};
 
-export interface Naids extends Floors {}
+export interface Naids extends Floors { }
 
-export interface Loids extends Floors {}
+export interface Loids extends Floors { }
 
 export interface FloorTable {
   sold: string;
@@ -108,16 +108,16 @@ const getFloors = async (tid: string, projectName: string = "tp2022") => {
     const specReg = /、|\d+-\d+号楼/;
     const id =
       folderName &&
-      // specReg.test(folderName) &&
-      allAreas.length > 1 &&
-      !allAreasHasTi
+        // specReg.test(folderName) &&
+        allAreas.length > 1 &&
+        !allAreasHasTi
         ? "spec"
         : folderName
-            ?.replaceAll(/(S-*\d+号楼)/g, "")
-            .replaceAll(/(\w*\d+-\d+号楼裙房)/g, "")
-            .replaceAll(/(\w*\d*号楼商业)/g, "")
-            .replaceAll(/号|楼|住|宅/g, "")
-            .replaceAll("、", "");
+          ?.replaceAll(/(S-*\d+号楼)/g, "")
+          .replaceAll(/(\w*\d+-\d+号楼裙房)/g, "")
+          .replaceAll(/(\w*\d*号楼商业)/g, "")
+          .replaceAll(/号|楼|住|宅/g, "")
+          .replaceAll("、", "");
     if (!id) return;
     for (const area of allAreas) {
       const href = area.querySelector("a");
@@ -357,7 +357,7 @@ export const saleBotHandler = async (message: Message) => {
     const title = `🌟${project}销售数据🌟`;
     const template = `\n\n\u00a0\u00a0\u00a0\u00a0  ${title}\n\n\u00a0\u00a0已售:${totalSolds}\u00a0\u00a0去化:${totalSolds}/${totalHouses}=${totalRate}%
     ____________________________${body}\n\n查询时间: ${time}\n数据来源: 网上房地产 `;
-    // console.log(template);
+    console.log(template);
     await message.room()?.say(template);
 
     // console.log("id", message.room()?.id);
