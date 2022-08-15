@@ -8,12 +8,12 @@
 
 网上房地产官网：
 
-![新盘备案数据查询]('https://github.com/JackZong/SalesBot/blob/main/docs/wsfdc.png')
+![新盘备案数据查询](https://github.com/JackZong/SalesBot/blob/main/docs/wsfdc.png)
 
 
 微信机器人：
 
-![微信机器人的形式]('https://github.com/JackZong/SalesBot/blob/main/docs/demo.jpeg')
+![微信机器人的形式](https://github.com/JackZong/SalesBot/blob/main/docs/demo.jpeg)
 
 ### Todo list
 
